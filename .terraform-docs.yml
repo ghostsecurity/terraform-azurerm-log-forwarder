@@ -15,6 +15,12 @@ sections:
   show: []
 
 content: |-
+  ## Example
+  The following example deploys a log forwarder.
+
+  ```hcl
+  {{ include "examples/eventhub/main.tf" }}
+  ```
   {{ .Providers }}
 
   {{ .Outputs }}
