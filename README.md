@@ -9,7 +9,7 @@ Refer to the [Log Based Discovery](https://docs.ghostsecurity.com/en/articles/94
 
 <!-- BEGIN_TF_DOCS -->
 ## Example
-The following example deploys a log forwarder.
+The following example deploys a forwarder which listens for Application Gateway access logs from an EventHub.
 
 ```hcl
 terraform {
@@ -23,26 +23,67 @@ terraform {
 
 provider "azurerm" {
   features {}
-  # Note: example subscription id, not real
-  subscription_id = "288dd777-3ad7-43c6-8eb6-731df328105a"
+  # Set this to the subscription ID you intend to deploy the forwarder into.
+  subscription_id = "de69bdf2-e6ca-40f4-a905-26a8dfc95dc0"
 }
 
-module "log_forwarder" {
-  source = "../../"
+# Create a new resource group to deploy the log forwarder into.
+resource "azurerm_resource_group" "forwarder" {
+  name     = "ghost-forwarder-example"
+  location = "eastus"
+}
 
-  name     = "fitz-test"
-  location = "westus2"
+data "azurerm_client_config" "current" {}
+
+# Create a new Key Vault that will be used to securely store the Ghost API
+# key used by the forwarder to submit access logs to the platform.
+resource "azurerm_key_vault" "vault" {
+  name                = "ghost-forwarder-vault"
+  tenant_id           = data.azurerm_client_config.current.tenant_id
+  location            = azurerm_resource_group.forwarder.location
+  resource_group_name = azurerm_resource_group.forwarder.name
+  sku_name            = "standard"
+}
+
+# Create a secret in the key vault to store the Ghost API key.
+# The API key must have the "write:logs" permission and a new key
+# can be created by navigating to https://app.ghostsecurity.com/settings/apikeys.
+resource "azurerm_key_vault_secret" "api_key" {
+  name         = "GhostAPIKey"
+  value        = ""
+  key_vault_id = azurerm_key_vault.vault.id
+  # Ignore changes to the value which will be set outside of terraform.
+  lifecycle {
+    ignore_changes = [value]
+  }
+  depends_on = [
+    azurerm_key_vault_access_policy.user,
+  ]
+}
+
+# Deploy the log forwarder into the resource group to send access logs to Ghost.
+module "log_forwarder" {
+  source = "ghostsecurity/log-forwarder/azure"
+
+  # Resource group to deploy forwarder into.
+  resource_group_name = azurerm_resource_group.forwarder.name
+
+  # Additional tags to add to resources created by the module which support tagging.
   tags = {
     env = "dev"
   }
 
-  api_url = "https://api.dev.ghostsecurity.com"
-  # TODO: use key vault
-  api_key = ""
+  # Key vault secret created earlier that stores the Ghost API key
+  api_key_secret_id = azurerm_key_vault_secret.api_key.versionless_id
+  key_vault_id      = azurerm_key_vault.vault.id
 
-  eventhub_name                = "david-s55a7qrf-eh"
-  eventhub_namespace           = "david-s55a7qrf-ehns"
-  eventhub_resource_group_name = "david-s55a7qrf"
+  # Specify the EventHub that is receiving Application Gateway access logs
+  # which the forwarder will process and send to Ghost.
+  # See https://learn.microsoft.com/en-us/azure/application-gateway/application-gateway-diagnostics
+  # for configuring access logging to send to EventHub.
+  eventhub_name                = "eventhub-name"
+  eventhub_namespace           = "eventhub-namespace"
+  eventhub_resource_group_name = "eventhub-resource-group"
 }
 ```
 ## Providers
@@ -60,11 +101,12 @@ No outputs.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_api_key"></a> [api\_key](#input\_api\_key) | Ghost API key | `string` | n/a | yes |
+| <a name="input_api_key_secret_id"></a> [api\_key\_secret\_id](#input\_api\_key\_secret\_id) | Versionless secret Id of a key vault secret that stores a Ghost API key with write:logs permissions. | `string` | n/a | yes |
 | <a name="input_api_url"></a> [api\_url](#input\_api\_url) | Base URL for the Ghost API | `string` | `"https://api.ghostsecurity.com"` | no |
 | <a name="input_eventhub_name"></a> [eventhub\_name](#input\_eventhub\_name) | Name of the EventHub to subscribe to for Application Gateway access log events | `string` | n/a | yes |
 | <a name="input_eventhub_namespace"></a> [eventhub\_namespace](#input\_eventhub\_namespace) | Namespace of the EventHub subscribe to for Application Gateway access log events | `string` | n/a | yes |
 | <a name="input_eventhub_resource_group_name"></a> [eventhub\_resource\_group\_name](#input\_eventhub\_resource\_group\_name) | Resource group name of the EventHub to subscribe to for Application Gateway access log events | `string` | n/a | yes |
+| <a name="input_key_vault_id"></a> [key\_vault\_id](#input\_key\_vault\_id) | ID of Azure key vault which stores the secret key given in api\_key\_secret\_id | `string` | n/a | yes |
 | <a name="input_location"></a> [location](#input\_location) | Location for the resource group and related function resources | `string` | n/a | yes |
 | <a name="input_name"></a> [name](#input\_name) | The name for the log forwarder. Must be unique within your subscription. | `string` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | Map of tags to assign to all resources. By default resources are tagged with ghost:forwarder\_name. | `map(string)` | `{}` | no |
@@ -75,9 +117,12 @@ No outputs.
 |------|------|
 | [azurerm_application_insights.function](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/application_insights) | resource |
 | [azurerm_eventhub_authorization_rule.function](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/eventhub_authorization_rule) | resource |
+| [azurerm_eventhub_consumer_group.function](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/eventhub_consumer_group) | resource |
+| [azurerm_key_vault_access_policy.keyvault_policy](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/key_vault_access_policy) | resource |
 | [azurerm_linux_function_app.function](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/linux_function_app) | resource |
-| [azurerm_resource_group.forwarder](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/resource_group) | resource |
 | [azurerm_service_plan.function_plan](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/service_plan) | resource |
 | [azurerm_storage_account.storage](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/storage_account) | resource |
 | [random_string.storage_account](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) | resource |
+| [azurerm_client_config.current](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/client_config) | data source |
+| [azurerm_resource_group.forwarder](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/resource_group) | data source |
 <!-- END_TF_DOCS -->
