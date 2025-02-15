@@ -31,6 +31,25 @@ resource "azurerm_key_vault" "vault" {
   sku_name            = "standard"
 }
 
+# Grant user running terraform to manage secrets in the Key Vault
+resource "azurerm_key_vault_access_policy" "user" {
+  key_vault_id = azurerm_key_vault.vault.id
+
+  tenant_id = data.azurerm_client_config.current.tenant_id
+  object_id = data.azurerm_client_config.current.object_id
+
+  secret_permissions = [
+    "Get",
+    "List",
+    "Set",
+    "Delete",
+    "Recover",
+    "Backup",
+    "Restore",
+    "Purge"
+  ]
+}
+
 # Create a secret in the key vault to store the Ghost API key.
 # The API key must have the "write:logs" permission and a new key
 # can be created by navigating to https://app.ghostsecurity.com/settings/apikeys.
@@ -42,8 +61,9 @@ resource "azurerm_key_vault_secret" "api_key" {
   lifecycle {
     ignore_changes = [value]
   }
+
   depends_on = [
-    azurerm_key_vault_access_policy.user,
+    azurerm_key_vault_access_policy.user
   ]
 }
 
@@ -53,6 +73,10 @@ module "log_forwarder" {
 
   # Resource group to deploy forwarder into.
   resource_group_name = azurerm_resource_group.forwarder.name
+
+  # Name is used to generate unique names for deployed resources.
+  # If you deploy multiple forwarders in the same subscription they must have unique names
+  name = "dev-forwarder"
 
   # Additional tags to add to resources created by the module which support tagging.
   tags = {
@@ -70,4 +94,9 @@ module "log_forwarder" {
   eventhub_name                = "eventhub-name"
   eventhub_namespace           = "eventhub-namespace"
   eventhub_resource_group_name = "eventhub-resource-group"
+
+  # Force terraform to wait for the resource group to be created first in the plan.
+  depends_on = [
+    azurerm_resource_group.forwarder
+  ]
 }

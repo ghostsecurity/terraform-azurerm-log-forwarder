@@ -1,14 +1,10 @@
-variable "name" {
-  description = "The name for the log forwarder. Must be unique within your subscription."
+variable "resource_group_name" {
+  description = "The name of the resource group to deploy the forwarder resources into."
   type        = string
-  validation {
-    condition     = length(var.name) <= 50 && can(regex("^[A-Za-z0-9-]+$", var.name))
-    error_message = "Name can only contain alphanumeric characters and hyphens."
-  }
 }
 
-variable "location" {
-  description = "Location for the resource group and related function resources"
+variable "name" {
+  description = "Unique name of the forwarder. Multiple forwarders deployed in the same subscription must have unique names."
   type        = string
 }
 
