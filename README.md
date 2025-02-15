@@ -45,6 +45,25 @@ resource "azurerm_key_vault" "vault" {
   sku_name            = "standard"
 }
 
+# Grant user running terraform to manage secrets in the Key Vault
+resource "azurerm_key_vault_access_policy" "user" {
+  key_vault_id = azurerm_key_vault.vault.id
+
+  tenant_id = data.azurerm_client_config.current.tenant_id
+  object_id = data.azurerm_client_config.current.object_id
+
+  secret_permissions = [
+    "Get",
+    "List",
+    "Set",
+    "Delete",
+    "Recover",
+    "Backup",
+    "Restore",
+    "Purge"
+  ]
+}
+
 # Create a secret in the key vault to store the Ghost API key.
 # The API key must have the "write:logs" permission and a new key
 # can be created by navigating to https://app.ghostsecurity.com/settings/apikeys.
@@ -56,8 +75,9 @@ resource "azurerm_key_vault_secret" "api_key" {
   lifecycle {
     ignore_changes = [value]
   }
+
   depends_on = [
-    azurerm_key_vault_access_policy.user,
+    azurerm_key_vault_access_policy.user
   ]
 }
 
@@ -67,6 +87,10 @@ module "log_forwarder" {
 
   # Resource group to deploy forwarder into.
   resource_group_name = azurerm_resource_group.forwarder.name
+
+  # Name is used to generate unique names for deployed resources.
+  # If you deploy multiple forwarders in the same subscription they must have unique names
+  name = "dev-forwarder"
 
   # Additional tags to add to resources created by the module which support tagging.
   tags = {
@@ -84,6 +108,11 @@ module "log_forwarder" {
   eventhub_name                = "eventhub-name"
   eventhub_namespace           = "eventhub-namespace"
   eventhub_resource_group_name = "eventhub-resource-group"
+
+  # Force terraform to wait for the resource group to be created first in the plan.
+  depends_on = [
+    azurerm_resource_group.forwarder
+  ]
 }
 ```
 ## Providers
@@ -107,8 +136,8 @@ No outputs.
 | <a name="input_eventhub_namespace"></a> [eventhub\_namespace](#input\_eventhub\_namespace) | Namespace of the EventHub subscribe to for Application Gateway access log events | `string` | n/a | yes |
 | <a name="input_eventhub_resource_group_name"></a> [eventhub\_resource\_group\_name](#input\_eventhub\_resource\_group\_name) | Resource group name of the EventHub to subscribe to for Application Gateway access log events | `string` | n/a | yes |
 | <a name="input_key_vault_id"></a> [key\_vault\_id](#input\_key\_vault\_id) | ID of Azure key vault which stores the secret key given in api\_key\_secret\_id | `string` | n/a | yes |
-| <a name="input_location"></a> [location](#input\_location) | Location for the resource group and related function resources | `string` | n/a | yes |
-| <a name="input_name"></a> [name](#input\_name) | The name for the log forwarder. Must be unique within your subscription. | `string` | n/a | yes |
+| <a name="input_name"></a> [name](#input\_name) | Unique name of the forwarder. Multiple forwarders deployed in the same subscription must have unique names. | `string` | n/a | yes |
+| <a name="input_resource_group_name"></a> [resource\_group\_name](#input\_resource\_group\_name) | The name of the resource group to deploy the forwarder resources into. | `string` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | Map of tags to assign to all resources. By default resources are tagged with ghost:forwarder\_name. | `map(string)` | `{}` | no |
 
 ## Resources
