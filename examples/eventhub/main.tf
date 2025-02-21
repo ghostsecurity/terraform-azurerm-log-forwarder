@@ -87,9 +87,9 @@ module "log_forwarder" {
   api_key_secret_id = azurerm_key_vault_secret.api_key.versionless_id
   key_vault_id      = azurerm_key_vault.vault.id
 
-  # Specify the EventHub that is receiving Application Gateway access logs
+  # Specify the EventHub that is receiving Front Door access logs
   # which the forwarder will process and send to Ghost.
-  # See https://learn.microsoft.com/en-us/azure/application-gateway/application-gateway-diagnostics
+  # See https://learn.microsoft.com/en-us/azure/frontdoor/standard-premium/how-to-logs
   # for configuring access logging to send to EventHub.
   eventhub_name                = "eventhub-name"
   eventhub_namespace           = "eventhub-namespace"

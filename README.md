@@ -1,7 +1,7 @@
 # terraform-ghost-log-forwarder-azure
-Terraform module which deploys a [Ghost](https://ghostsecurity.com/) log forwarder to Azure for sending [Application Gateway](https://learn.microsoft.com/en-us/azure/application-gateway/) access logs to the Ghost platform.
+Terraform module which deploys a [Ghost](https://ghostsecurity.com/) log forwarder [Azure Front Door](https://learn.microsoft.com/en-us/azure/frontdoor/standard-premium/how-to-logs) access logs to the Ghost platform.
 
-Refer to the [Log Based Discovery](https://docs.ghostsecurity.com/en/articles/9471377-log-based-discovery-alpha) documentation for more on how this is used in the Ghost platform.
+Refer to the [Log Based Discovery](https://docs.ghostsecurity.com/en/articles/10618998-log-based-api-discovery-azure) documentation for more on how this is used in the Ghost platform.
 
 ## Considerations
 - The module expects a Ghost API key with `write:logs` permissions.
@@ -101,9 +101,9 @@ module "log_forwarder" {
   api_key_secret_id = azurerm_key_vault_secret.api_key.versionless_id
   key_vault_id      = azurerm_key_vault.vault.id
 
-  # Specify the EventHub that is receiving Application Gateway access logs
+  # Specify the EventHub that is receiving Front Door access logs
   # which the forwarder will process and send to Ghost.
-  # See https://learn.microsoft.com/en-us/azure/application-gateway/application-gateway-diagnostics
+  # See https://learn.microsoft.com/en-us/azure/frontdoor/standard-premium/how-to-logs
   # for configuring access logging to send to EventHub.
   eventhub_name                = "eventhub-name"
   eventhub_namespace           = "eventhub-namespace"
