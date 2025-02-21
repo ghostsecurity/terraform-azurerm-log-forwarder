@@ -1,7 +1,7 @@
 locals {
   registry_url = "ghostsecurity.azurecr.io"
   image_name   = "forwarder"
-  image_tag    = "e86a13b"
+  image_tag    = "7ef82a6"
 }
 
 data "azurerm_resource_group" "forwarder" {
