@@ -83,7 +83,7 @@ resource "azurerm_key_vault_secret" "api_key" {
 
 # Deploy the log forwarder into the resource group to send access logs to Ghost.
 module "log_forwarder" {
-  source = "ghostsecurity/log-forwarder/azure"
+  source = "ghostsecurity/log-forwarder/azurerm"
 
   # Resource group to deploy forwarder into.
   resource_group_name = azurerm_resource_group.forwarder.name
