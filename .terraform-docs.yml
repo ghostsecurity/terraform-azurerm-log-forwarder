@@ -16,7 +16,7 @@ sections:
 
 content: |-
   ## Example
-  The following example deploys a forwarder which listens for Application Gateway access logs from an EventHub.
+  The following example deploys a forwarder which listens for Azure Front Door access logs from an EventHub.
 
   ```hcl
   {{ include "examples/eventhub/main.tf" }}

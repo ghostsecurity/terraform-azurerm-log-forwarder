@@ -31,16 +31,16 @@ variable "api_key_secret_id" {
 }
 
 variable "eventhub_name" {
-  description = "Name of the EventHub to subscribe to for Application Gateway access log events"
+  description = "Name of the EventHub to subscribe to for Azure Front Door access log events"
   type        = string
 }
 
 variable "eventhub_namespace" {
-  description = "Namespace of the EventHub subscribe to for Application Gateway access log events"
+  description = "Namespace of the EventHub subscribe to for Azure Front Door access log events"
   type        = string
 }
 
 variable "eventhub_resource_group_name" {
-  description = "Resource group name of the EventHub to subscribe to for Application Gateway access log events"
+  description = "Resource group name of the EventHub to subscribe to for Azure Front Door access log events"
   type        = string
 }
