@@ -9,7 +9,7 @@ Refer to the [Log Based Discovery](https://docs.ghostsecurity.com/en/articles/10
 
 <!-- BEGIN_TF_DOCS -->
 ## Example
-The following example deploys a forwarder which listens for Application Gateway access logs from an EventHub.
+The following example deploys a forwarder which listens for Azure Front Door access logs from an EventHub.
 
 ```hcl
 terraform {
@@ -132,9 +132,9 @@ No outputs.
 |------|-------------|------|---------|:--------:|
 | <a name="input_api_key_secret_id"></a> [api\_key\_secret\_id](#input\_api\_key\_secret\_id) | Versionless secret Id of a key vault secret that stores a Ghost API key with write:logs permissions. | `string` | n/a | yes |
 | <a name="input_api_url"></a> [api\_url](#input\_api\_url) | Base URL for the Ghost API | `string` | `"https://api.ghostsecurity.com"` | no |
-| <a name="input_eventhub_name"></a> [eventhub\_name](#input\_eventhub\_name) | Name of the EventHub to subscribe to for Application Gateway access log events | `string` | n/a | yes |
-| <a name="input_eventhub_namespace"></a> [eventhub\_namespace](#input\_eventhub\_namespace) | Namespace of the EventHub subscribe to for Application Gateway access log events | `string` | n/a | yes |
-| <a name="input_eventhub_resource_group_name"></a> [eventhub\_resource\_group\_name](#input\_eventhub\_resource\_group\_name) | Resource group name of the EventHub to subscribe to for Application Gateway access log events | `string` | n/a | yes |
+| <a name="input_eventhub_name"></a> [eventhub\_name](#input\_eventhub\_name) | Name of the EventHub to subscribe to for Azure Front Door access log events | `string` | n/a | yes |
+| <a name="input_eventhub_namespace"></a> [eventhub\_namespace](#input\_eventhub\_namespace) | Namespace of the EventHub subscribe to for Azure Front Door access log events | `string` | n/a | yes |
+| <a name="input_eventhub_resource_group_name"></a> [eventhub\_resource\_group\_name](#input\_eventhub\_resource\_group\_name) | Resource group name of the EventHub to subscribe to for Azure Front Door access log events | `string` | n/a | yes |
 | <a name="input_key_vault_id"></a> [key\_vault\_id](#input\_key\_vault\_id) | ID of Azure key vault which stores the secret key given in api\_key\_secret\_id | `string` | n/a | yes |
 | <a name="input_name"></a> [name](#input\_name) | Unique name of the forwarder. Multiple forwarders deployed in the same subscription must have unique names. | `string` | n/a | yes |
 | <a name="input_resource_group_name"></a> [resource\_group\_name](#input\_resource\_group\_name) | The name of the resource group to deploy the forwarder resources into. | `string` | n/a | yes |
